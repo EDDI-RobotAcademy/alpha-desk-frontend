@@ -1,24 +1,7 @@
 "use client";
 
-import StockSummaryCard, { StockSummaryCardProps } from "../components/StockSummaryCard";
-
-const MOCK_STOCKS: StockSummaryCardProps[] = [
-  {
-    name: "삼성전자",
-    summary: "반도체 및 스마트폰 사업을 영위하는 글로벌 IT 기업입니다.",
-    tags: ["반도체", "IT", "대형주"],
-  },
-  {
-    name: "SK하이닉스",
-    summary: "메모리 반도체 전문 기업으로 DRAM 및 NAND 플래시를 생산합니다.",
-    tags: ["반도체", "메모리", "대형주"],
-  },
-  {
-    name: "NAVER",
-    summary: "국내 최대 포털 및 검색 서비스를 운영하는 인터넷 플랫폼 기업입니다.",
-    tags: ["인터넷", "플랫폼", "IT"],
-  },
-];
+import StockSummaryCard from "../components/StockSummaryCard";
+import { MOCK_STOCK_SUMMARIES } from "./mocks/stockSummaryMocks";
 
 export default function DashboardPage() {
   return (
@@ -30,9 +13,14 @@ export default function DashboardPage() {
         </header>
 
         <section>
-          <h2 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4">종목 카드</h2>
+          <h2 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4">
+            종목 카드
+            <span className="ml-2 text-sm font-normal text-gray-400 dark:text-gray-500">
+              {MOCK_STOCK_SUMMARIES.length}개
+            </span>
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {MOCK_STOCKS.map((stock) => (
+            {MOCK_STOCK_SUMMARIES.map((stock) => (
               <StockSummaryCard key={stock.name} {...stock} />
             ))}
           </div>
