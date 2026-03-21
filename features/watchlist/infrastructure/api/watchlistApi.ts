@@ -1,10 +1,5 @@
 import { httpClient } from "@/infrastructure/http/httpClient";
-
-export interface WatchlistItem {
-  id: number;
-  symbol: string;
-  name: string;
-}
+import { WatchlistItem } from "@/features/watchlist/domain/model/watchlistItem";
 
 export const watchlistApi = {
   getList: async (): Promise<WatchlistItem[]> => {

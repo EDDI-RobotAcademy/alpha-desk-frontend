@@ -1,14 +1,4 @@
-import { TagItem } from '@/app/mocks/summaryMocks';
-
-interface StockSummaryCardProps {
-  symbol: string;
-  name: string;
-  summary: string;
-  tags: TagItem[];
-  sentiment: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
-  sentiment_score: number;
-  confidence: number;
-}
+import { StockSummary } from '@/features/dashboard/domain/model/stockSummary';
 
 const SENTIMENT_STYLE = {
   POSITIVE: 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300',
@@ -30,7 +20,7 @@ export default function StockSummaryCard({
   sentiment,
   sentiment_score,
   confidence,
-}: StockSummaryCardProps) {
+}: StockSummary) {
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-5 flex flex-col gap-3 bg-background">
 

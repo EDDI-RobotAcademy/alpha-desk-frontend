@@ -1,45 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { watchlistApi, WatchlistItem } from '@/infrastructure/api/watchlistApi';
+import { useWatchlist } from '@/features/watchlist/application/hooks/useWatchlist';
 
 export default function WatchlistPage() {
-  const [items, setItems] = useState<WatchlistItem[]>([]);
-  const [symbol, setSymbol] = useState('');
-  const [name, setName] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    watchlistApi
-      .getList()
-      .then(setItems)
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleAdd = async () => {
-    if (!symbol.trim() || !name.trim()) return;
-    setError(null);
-    try {
-      const added = await watchlistApi.add(symbol.trim(), name.trim());
-      setItems((prev) => [...prev, added]);
-      setSymbol('');
-      setName('');
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    setError(null);
-    try {
-      await watchlistApi.remove(id);
-      setItems((prev) => prev.filter((item) => item.id !== id));
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  };
+  const { items, symbol, setSymbol, name, setName, error, loading, handleAdd, handleDelete } =
+    useWatchlist();
 
   return (
     <main className="min-h-screen bg-background text-foreground p-8">

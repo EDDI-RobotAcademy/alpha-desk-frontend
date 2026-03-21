@@ -1,5 +1,5 @@
-import StockSummaryCard from '../components/StockSummaryCard';
-import { MOCK_SUMMARIES } from '../mocks/summaryMocks';
+import StockSummaryCard from '@/features/dashboard/ui/components/StockSummaryCard';
+import { MOCK_SUMMARIES } from '@/features/dashboard/infrastructure/mock/summaryMocks';
 
 export default function DashboardPage() {
   return (
