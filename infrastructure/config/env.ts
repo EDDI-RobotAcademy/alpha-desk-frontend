@@ -7,6 +7,5 @@ const requireEnv = (key: string, value: string | undefined): string => {
 
 export const clientEnv = {
   apiBaseUrl: requireEnv("NEXT_PUBLIC_API_BASE_URL", process.env.NEXT_PUBLIC_API_BASE_URL),
-  googleLoginPath: requireEnv("NEXT_PUBLIC_GOOGLE_LOGIN_PATH", process.env.NEXT_PUBLIC_GOOGLE_LOGIN_PATH),
-  kakaoLoginPath: requireEnv("NEXT_PUBLIC_KAKAO_LOGIN_PATH", process.env.NEXT_PUBLIC_KAKAO_LOGIN_PATH),
+kakaoLoginPath: requireEnv("NEXT_PUBLIC_KAKAO_LOGIN_PATH", process.env.NEXT_PUBLIC_KAKAO_LOGIN_PATH),
 } as const;
