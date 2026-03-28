@@ -1,270 +1,214 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect } from "react"
 import Link from "next/link"
-import { useSharedCards } from "@/features/share/application/hooks/useSharedCards"
-import { useCardActions } from "@/features/share/application/hooks/useCardActions"
-import { usePublicSummaries } from "@/features/public/application/hooks/usePublicSummaries"
-import { deleteSharedCard } from "@/features/share/infrastructure/api/shareApi"
-import { getAccountIdCookie } from "@/features/share/infrastructure/utils/guestName"
-import { CommentModal } from "@/features/share/ui/components/CommentModal"
-import type { SharedCard } from "@/features/share/domain/model/sharedCard"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/features/auth/application/hooks/useAuth"
 
-const SOURCE_LABEL: Record<string, string> = { NEWS: "뉴스", DISCLOSURE: "공시", REPORT: "재무" }
+const HOW_IT_WORKS = [
+    {
+        step: "01",
+        title: "관심종목 등록",
+        desc: "삼성전자, 현대차, NAVER 등 분석하고 싶은 종목을 검색해서 워치리스트에 추가합니다.",
+        icon: "playlist_add",
+    },
+    {
+        step: "02",
+        title: "AI 자동 수집·분석",
+        desc: "매일 07:00 KST, AI가 등록 종목의 뉴스·공시·재무 리포트를 자동 수집하고 요약합니다.",
+        icon: "smart_toy",
+    },
+    {
+        step: "03",
+        title: "대시보드에서 확인",
+        desc: "감성 점수, 리스크 태그, 3~5줄 요약을 대시보드에서 한눈에 확인합니다. 투자 판단은 본인이.",
+        icon: "dashboard",
+    },
+]
 
-const SENTIMENT_STYLE: Record<string, string> = {
-    POSITIVE: "border-tertiary text-tertiary",
-    NEUTRAL: "border-on-surface-variant text-on-surface-variant",
-    NEGATIVE: "border-error text-error",
-}
+const FEATURES = [
+    { icon: "bar_chart",   title: "대시보드",  desc: "관심종목 AI 요약을 카드 형태로 한눈에 확인. 파이프라인 직접 실행 가능." },
+    { icon: "visibility",  title: "워치리스트", desc: "종목 검색 후 추가. 일별 등락 히트맵으로 최근 6주 흐름 파악." },
+    { icon: "forum",       title: "커뮤니티",   desc: "종목 분석·시황 의견을 팀원·사용자와 공유하는 게시판." },
+    { icon: "play_circle", title: "영상 피드",  desc: "관심종목 관련 유튜브 영상을 자동으로 수집해 탭별로 제공." },
+]
 
-const SENTIMENT_LABEL: Record<string, string> = {
-    POSITIVE: "긍정",
-    NEUTRAL: "중립",
-    NEGATIVE: "부정",
-}
+export default function LandingPage() {
+    const router = useRouter()
+    const { state, loadUser } = useAuth()
 
-function SharedCardItem({ card, onReload }: { card: SharedCard; onReload: () => void }) {
-    const {
-        likeCount, liked, handleLike,
-        comments, commentLoading,
-        loadComments, handleAddComment,
-    } = useCardActions(card.id, card.like_count, card.user_has_liked)
+    useEffect(() => {
+        loadUser()
+    }, [loadUser])
 
-    const [commentOpen, setCommentOpen] = useState(false)
-    const [deleting, setDeleting] = useState(false)
-
-    const isOwner =
-        card.sharer_account_id !== null &&
-        card.sharer_account_id === Number(getAccountIdCookie())
-
-    const scoreStr = `${card.sentiment_score > 0 ? "+" : ""}${card.sentiment_score.toFixed(2)}`
-
-    const handleDelete = async () => {
-        if (!confirm("이 카드의 공유를 취소할까요?")) return
-        setDeleting(true)
-        try {
-            await deleteSharedCard(card.id)
-            onReload()
-        } finally {
-            setDeleting(false)
+    useEffect(() => {
+        if (state.status === "AUTHENTICATED") {
+            router.push("/home")
         }
+    }, [state.status, router])
+
+    if (state.status === "LOADING" || state.status === "AUTHENTICATED") {
+        return <div className="h-full bg-background" />
     }
 
     return (
-        <article className="border border-outline bg-surface-container-low">
-            <div className="p-5 flex flex-col gap-3">
-                {/* Header */}
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-3 flex-wrap">
-                        <span className="font-mono text-sm font-bold text-outline">{card.symbol}</span>
-                        <span className="font-mono text-base font-bold text-on-surface">{card.name}</span>
-                        {SOURCE_LABEL[card.source_type] && (
-                            <span className="border border-outline font-mono text-xs px-1.5 py-0.5 text-on-surface-variant uppercase">
-                                {SOURCE_LABEL[card.source_type]}
-                            </span>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className={`border font-mono text-xs px-2 py-0.5 font-bold ${SENTIMENT_STYLE[card.sentiment] ?? SENTIMENT_STYLE.NEUTRAL}`}>
-                            {SENTIMENT_LABEL[card.sentiment] ?? card.sentiment} {scoreStr}
-                        </span>
-                        {isOwner && (
-                            <button
-                                type="button"
-                                onClick={handleDelete}
-                                disabled={deleting}
-                                className="font-mono text-xs text-outline hover:text-error disabled:opacity-40 uppercase"
-                            >
-                                DEL
-                            </button>
-                        )}
-                    </div>
+        <div className="h-full overflow-y-auto bg-[#d1d1d1] font-body text-on-surface">
+
+            {/* Landing Nav */}
+            <nav className="sticky top-0 w-full z-50 bg-surface-container border-b-2 border-primary flex justify-between items-center px-6 h-12">
+                <span className="font-headline font-bold text-xl text-primary uppercase tracking-tighter">
+                    ALPHA_DESK_v1.0
+                </span>
+                <div className="hidden md:flex gap-6 items-center font-mono uppercase tracking-tighter text-sm">
+                    <a href="#how" className="text-on-surface-variant hover:text-primary">HOW_IT_WORKS</a>
+                    <a href="#features" className="text-on-surface-variant hover:text-primary">FEATURES</a>
                 </div>
+                <Link href="/login" className="bg-primary text-white font-mono text-xs px-3 py-1.5 uppercase hover:opacity-90">
+                    SYS_LOGIN →
+                </Link>
+            </nav>
 
-                {/* Summary */}
-                <p className="font-mono text-sm text-on-surface leading-relaxed">{card.summary}</p>
+            {/* Paper Feed */}
+            <main className="relative my-8 mx-auto w-full max-w-5xl bg-white flex">
+                <div className="w-12 sprocket-margin border-r border-outline-variant hidden sm:block flex-shrink-0" />
 
-                {/* Tags */}
-                <div className="flex items-center gap-2 flex-wrap">
-                    {card.tags.map((tag) => (
-                        <span key={tag} className="border border-outline font-mono text-xs px-2 py-0.5 text-on-surface-variant">
-                            #{tag}
-                        </span>
-                    ))}
-                    <span className="font-mono text-xs text-outline ml-auto">
-                        신뢰도 {Math.round(card.confidence * 100)}%
-                    </span>
-                </div>
+                <div className="flex-1 bg-white p-6 sm:p-12 min-w-0">
 
-                {/* Confidence bar */}
-                <div className="h-1 bg-surface-container-highest">
-                    <div className="h-full bg-primary" style={{ width: `${card.confidence * 100}%` }} />
-                </div>
+                    {/* ── Hero ── */}
+                    <section className="mb-16">
+                        <div className="border-4 border-primary p-6 md:p-10 flex flex-col gap-6">
+                            <div className="bg-primary text-on-primary px-3 py-1 font-mono text-xs uppercase w-fit">
+                                SYSTEM_STATUS: ONLINE
+                            </div>
+                            <div>
+                                <h1 className="font-headline font-bold text-4xl md:text-6xl tracking-tighter text-primary leading-none uppercase mb-4">
+                                    관심종목<br />AI 인텔리전스<br />터미널
+                                </h1>
+                                <p className="font-mono text-sm text-on-surface-variant leading-relaxed max-w-lg">
+                                    뉴스·공시·리포트를 매일 자동 수집하고<br />
+                                    AI가 3~5줄로 요약 + 감성 점수 + 리스크 태그를 부착합니다.<br />
+                                    <span className="text-outline">투자 추천은 하지 않습니다. 판단은 본인이 합니다.</span>
+                                </p>
+                            </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-4 border-t border-outline-variant pt-2">
-                    <button
-                        type="button"
-                        onClick={handleLike}
-                        className={`flex items-center gap-1.5 font-mono text-xs uppercase transition-none ${
-                            liked ? "text-error font-bold" : "text-on-surface-variant hover:text-error"
-                        }`}
-                    >
-                        <span className="material-symbols-outlined text-[14px]">
-                            {liked ? "favorite" : "favorite_border"}
-                        </span>
-                        {likeCount}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => { setCommentOpen(true); loadComments() }}
-                        className="flex items-center gap-1.5 font-mono text-xs text-on-surface-variant hover:text-primary uppercase transition-none"
-                    >
-                        <span className="material-symbols-outlined text-[14px]">chat_bubble_outline</span>
-                        {card.comment_count}
-                    </button>
-                    <span className="ml-auto font-mono text-xs text-outline">
-                        {card.sharer_nickname} · {new Date(card.created_at).toLocaleDateString("ko-KR")}
-                    </span>
-                </div>
-            </div>
+                            {/* CTA 버튼 */}
+                            <div className="flex gap-3 flex-wrap">
+                                <Link
+                                    href="/login"
+                                    className="bg-primary text-white font-mono text-sm px-5 py-2.5 uppercase hover:opacity-90"
+                                >
+                                    시작하기 →
+                                </Link>
+                                <Link
+                                    href="/home"
+                                    className="border border-primary text-primary font-mono text-sm px-5 py-2.5 uppercase hover:bg-primary hover:text-white"
+                                >
+                                    게스트로 시작하기
+                                </Link>
+                            </div>
 
-            <CommentModal
-                cardId={card.id}
-                open={commentOpen}
-                comments={comments}
-                loading={commentLoading}
-                onOpen={loadComments}
-                onClose={() => setCommentOpen(false)}
-                onSubmit={async (content, nickname) => {
-                    await handleAddComment(content, nickname)
-                    onReload()
-                }}
-            />
-        </article>
-    )
-}
-
-export default function HomePage() {
-    const { cards, loading: cardsLoading, error: cardsError, reload } = useSharedCards(20)
-    const { summaries, isLoading: summaryLoading } = usePublicSummaries()
-
-    return (
-        <main className="p-6 md:p-8 max-w-2xl mx-auto pb-20 md:pb-8">
-
-            {/* Header */}
-            <div className="mb-6 border-b border-outline pb-4">
-                <div className="font-headline font-bold text-on-surface text-xl uppercase tracking-tighter">
-                    HOME
-                </div>
-                <div className="font-mono text-sm text-on-surface-variant mt-0.5">
-                    공유된 AI 분석 카드와 오늘의 공개 브리핑
-                </div>
-            </div>
-
-            {/* ── 공유 카드 피드 ── */}
-            <section className="mb-10">
-                <div className="font-mono text-xs font-bold text-on-surface uppercase tracking-widest mb-3">
-                    SHARED_CARDS
-                    {cards.length > 0 && (
-                        <span className="ml-2 text-outline font-normal">({cards.length})</span>
-                    )}
-                </div>
-
-                {cardsLoading ? (
-                    <div className="space-y-3">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="h-32 bg-surface-container animate-pulse" />
-                        ))}
-                    </div>
-                ) : cardsError ? (
-                    <div className="border border-dashed border-outline px-6 py-8 text-center">
-                        <p className="font-mono text-sm text-error">[ERROR] 카드를 불러오지 못했습니다.</p>
-                    </div>
-                ) : cards.length === 0 ? (
-                    <div className="border border-dashed border-outline px-6 py-10 text-center">
-                        <p className="font-mono text-sm text-on-surface-variant mb-1">
-                            아직 공유된 분석 카드가 없습니다.
-                        </p>
-                        <p className="font-mono text-xs text-outline mb-4">
-                            대시보드에서 AI 분석 후 카드를 공유해보세요.
-                        </p>
-                        <Link
-                            href="/dashboard"
-                            className="font-mono text-xs border border-outline px-4 py-2 text-on-surface-variant hover:bg-surface-container uppercase inline-block"
-                        >
-                            대시보드로 이동
-                        </Link>
-                    </div>
-                ) : (
-                    <div className="space-y-3">
-                        {cards.map((card) => (
-                            <SharedCardItem key={card.id} card={card} onReload={reload} />
-                        ))}
-                    </div>
-                )}
-            </section>
-
-            {/* ── 오늘의 공개 AI 브리핑 ── */}
-            <section>
-                <div className="font-mono text-xs font-bold text-on-surface uppercase tracking-widest mb-1">
-                    TODAY_PUBLIC_BRIEF
-                </div>
-                <div className="font-mono text-xs text-outline mb-3">
-                    주요 종목 오늘의 AI 분석 요약 · 매일 07:00 KST 자동 수집
-                </div>
-
-                {summaryLoading ? (
-                    <div className="space-y-3">
-                        {[1, 2].map((i) => (
-                            <div key={i} className="h-24 bg-surface-container animate-pulse" />
-                        ))}
-                    </div>
-                ) : summaries.length === 0 ? (
-                    <div className="border border-dashed border-outline px-6 py-8 text-center">
-                        <p className="font-mono text-sm text-on-surface-variant">
-                            오늘의 분석 데이터를 준비 중입니다.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="space-y-3">
-                        {summaries.map((s) => (
-                            <div key={s.symbol} className="border border-outline bg-surface-container-low p-5">
-                                <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-                                    <div className="flex items-center gap-3 flex-wrap">
-                                        <span className="font-mono text-sm font-bold text-outline">{s.symbol}</span>
-                                        <span className="font-mono text-base font-bold text-on-surface">{s.name}</span>
-                                        {s.source_type && SOURCE_LABEL[s.source_type] && (
-                                            <span className="border border-outline font-mono text-xs px-1.5 py-0.5 text-on-surface-variant">
-                                                {SOURCE_LABEL[s.source_type]}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <span className={`border font-mono text-xs px-2 py-0.5 font-bold ${SENTIMENT_STYLE[s.sentiment] ?? SENTIMENT_STYLE.NEUTRAL}`}>
-                                        {SENTIMENT_LABEL[s.sentiment] ?? s.sentiment}{" "}
-                                        {s.sentiment_score > 0 ? "+" : ""}{s.sentiment_score.toFixed(2)}
-                                    </span>
+                            <div className="border-t border-primary pt-4 grid grid-cols-3 gap-4 font-mono text-xs">
+                                <div>
+                                    <div className="text-2xl font-bold text-primary">07:00</div>
+                                    <div className="text-outline uppercase">KST 자동 수집</div>
                                 </div>
-                                <p className="font-mono text-sm text-on-surface leading-relaxed mb-3">{s.summary}</p>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    {s.tags.map((tag) => (
-                                        <span key={tag} className="border border-outline font-mono text-xs px-2 py-0.5 text-on-surface-variant">
-                                            #{tag}
-                                        </span>
-                                    ))}
-                                    <span className="font-mono text-xs text-outline ml-auto">
-                                        신뢰도 {Math.round(s.confidence * 100)}%
-                                    </span>
+                                <div>
+                                    <div className="text-2xl font-bold text-primary">3~5줄</div>
+                                    <div className="text-outline uppercase">AI 요약</div>
                                 </div>
-                                <div className="mt-3 h-1 bg-surface-container-highest">
-                                    <div className="h-full bg-primary" style={{ width: `${s.confidence * 100}%` }} />
+                                <div>
+                                    <div className="text-2xl font-bold text-primary">100%</div>
+                                    <div className="text-outline uppercase">사실 기반</div>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </section>
-        </main>
+                        </div>
+                    </section>
+
+                    <div className="micro-perforation my-12" />
+
+                    {/* ── [01] How It Works ── */}
+                    <section id="how" className="mb-16">
+                        <h2 className="font-headline font-bold text-xl text-primary mb-8 border-b border-primary pb-2 uppercase tracking-widest">
+                            [01] HOW_IT_WORKS
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-outline">
+                            {HOW_IT_WORKS.map((step, i) => (
+                                <div
+                                    key={step.step}
+                                    className={`p-6 flex flex-col gap-3 ${i < HOW_IT_WORKS.length - 1 ? "border-b md:border-b-0 md:border-r border-outline" : ""}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span className="font-mono text-3xl font-bold text-primary leading-none">{step.step}</span>
+                                        <span className="material-symbols-outlined text-primary" style={{ fontSize: "28px" }}>{step.icon}</span>
+                                    </div>
+                                    <div className="font-headline font-bold text-on-surface uppercase tracking-tight text-base">
+                                        {step.title}
+                                    </div>
+                                    <p className="font-mono text-sm text-on-surface-variant leading-relaxed">{step.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    <div className="micro-perforation my-12" />
+
+                    {/* ── [02] Features ── */}
+                    <section id="features" className="mb-16">
+                        <h2 className="font-headline font-bold text-xl text-primary mb-8 border-b border-primary pb-2 uppercase tracking-widest">
+                            [02] SYSTEM_MODULES
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {FEATURES.map((f) => (
+                                <div
+                                    key={f.title}
+                                    className="border border-outline p-5 bg-surface-container-low flex gap-4"
+                                >
+                                    <span className="material-symbols-outlined text-primary flex-shrink-0" style={{ fontSize: "32px" }}>
+                                        {f.icon}
+                                    </span>
+                                    <div>
+                                        <div className="font-headline font-bold text-on-surface uppercase text-base mb-1">{f.title}</div>
+                                        <p className="font-mono text-sm text-on-surface-variant leading-relaxed">{f.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* ── Disclosure ── */}
+                    <section className="mt-20 mb-4">
+                        <div className="bg-primary text-white p-8 text-center border-4 border-double border-white outline outline-4 outline-primary">
+                            <h2 className="font-headline font-extrabold text-3xl md:text-5xl tracking-[0.15em] mb-3">
+                                AI 분석 참고용
+                            </h2>
+                            <p className="font-mono text-sm uppercase opacity-90 leading-relaxed">
+                                FOR AI ANALYSIS REFERENCE ONLY.<br />
+                                NOT FINANCIAL ADVICE. INVESTMENT DECISIONS ARE SOLELY YOUR RESPONSIBILITY.
+                            </p>
+                            <div className="mt-6 flex gap-3 justify-center flex-wrap">
+                                <Link href="/login" className="bg-white text-primary font-mono text-sm font-bold px-6 py-2.5 uppercase hover:opacity-90 inline-block">
+                                    시작하기 →
+                                </Link>
+                                <Link href="/home" className="border-2 border-white text-white font-mono text-sm px-6 py-2.5 uppercase hover:bg-white hover:text-primary inline-block">
+                                    게스트로 둘러보기
+                                </Link>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+
+                <div className="w-12 sprocket-margin border-l border-outline-variant hidden sm:block flex-shrink-0" />
+            </main>
+
+            {/* Footer */}
+            <footer className="w-full border-t border-dashed border-outline bg-surface py-8 px-4 flex flex-col items-center gap-3">
+                <div className="font-mono text-xs uppercase text-outline text-center space-y-2">
+                    <div>(C) 2025 ALPHA DESK SYSTEMS. ALL RIGHTS RESERVED.</div>
+                </div>
+                <div className="font-headline font-bold text-primary text-xs tracking-widest">ALPHA_DESK_CORP</div>
+            </footer>
+
+        </div>
     )
 }
