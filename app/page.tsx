@@ -26,6 +26,51 @@ const HOW_IT_WORKS = [
     },
 ]
 
+const SAMPLE_SUMMARIES = [
+    {
+        symbol: "005930",
+        name: "삼성전자",
+        sentiment: "POSITIVE",
+        score: "+0.72",
+        source: "뉴스",
+        tags: ["HBM", "AI서버", "반도체"],
+        summary: "HBM3E 메모리 공급 계약 잠정 체결 보도. 엔비디아향 물량 증가 기대감. 2분기 실적 상향 모멘텀 확인.",
+        confidence: 84,
+    },
+    {
+        symbol: "005380",
+        name: "현대차",
+        sentiment: "NEUTRAL",
+        score: "+0.08",
+        source: "공시",
+        tags: ["전기차", "IRA", "북미"],
+        summary: "미국 IRA 세액공제 요건 충족 공시 제출. 현지 생산 비율 조건 통과. 실질 수혜 규모는 추가 확인 필요.",
+        confidence: 61,
+    },
+    {
+        symbol: "068270",
+        name: "셀트리온",
+        sentiment: "NEGATIVE",
+        score: "-0.41",
+        source: "재무",
+        tags: ["바이오시밀러", "유럽", "가격경쟁"],
+        summary: "유럽 바이오시밀러 시장 경쟁 심화로 평균 판매가격(ASP) 하락 압력. 마진 방어 전략 구체화 필요. 리스크 모니터링 권고.",
+        confidence: 77,
+    },
+]
+
+const SENTIMENT_STYLE: Record<string, string> = {
+    POSITIVE: "border-tertiary text-tertiary",
+    NEUTRAL:  "border-on-surface-variant text-on-surface-variant",
+    NEGATIVE: "border-error text-error",
+}
+
+const SENTIMENT_LABEL: Record<string, string> = {
+    POSITIVE: "긍정",
+    NEUTRAL:  "중립",
+    NEGATIVE: "부정",
+}
+
 const FEATURES = [
     { icon: "bar_chart",   title: "대시보드",  desc: "관심종목 AI 요약을 카드 형태로 한눈에 확인. 파이프라인 직접 실행 가능." },
     { icon: "visibility",  title: "워치리스트", desc: "종목 검색 후 추가. 일별 등락 히트맵으로 최근 6주 흐름 파악." },
@@ -61,6 +106,7 @@ export default function LandingPage() {
                 </span>
                 <div className="hidden md:flex gap-6 items-center font-mono uppercase tracking-tighter text-sm">
                     <a href="#how" className="text-on-surface-variant hover:text-primary">HOW_IT_WORKS</a>
+                    <a href="#sample" className="text-on-surface-variant hover:text-primary">SAMPLE_OUTPUT</a>
                     <a href="#features" className="text-on-surface-variant hover:text-primary">FEATURES</a>
                 </div>
                 <Link href="/login" className="bg-primary text-white font-mono text-xs px-3 py-1.5 uppercase hover:opacity-90">
@@ -152,10 +198,52 @@ export default function LandingPage() {
 
                     <div className="micro-perforation my-12" />
 
-                    {/* ── [02] Features ── */}
+                    {/* ── [02] Sample Output ── */}
+                    <section id="sample" className="mb-16">
+                        <h2 className="font-headline font-bold text-xl text-primary mb-2 border-b border-primary pb-2 uppercase tracking-widest">
+                            [02] SAMPLE_OUTPUT
+                        </h2>
+                        <p className="font-mono text-xs text-outline mb-6 uppercase tracking-widest">
+                            * 아래는 실제 AI 요약 결과 예시입니다. 로그인 후 본인의 관심종목 데이터를 확인하세요.
+                        </p>
+                        <div className="space-y-4">
+                            {SAMPLE_SUMMARIES.map((s) => (
+                                <div key={s.symbol} className="border border-outline bg-surface-container-low p-5">
+                                    <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-mono text-sm font-bold text-outline">{s.symbol}</span>
+                                            <span className="font-mono text-base font-bold text-on-surface">{s.name}</span>
+                                            <span className="border border-outline font-mono text-xs px-1.5 py-0.5 text-on-surface-variant">
+                                                {s.source}
+                                            </span>
+                                        </div>
+                                        <span className={`border font-mono text-xs px-2 py-0.5 font-bold ${SENTIMENT_STYLE[s.sentiment]}`}>
+                                            {SENTIMENT_LABEL[s.sentiment]} {s.score}
+                                        </span>
+                                    </div>
+                                    <p className="font-mono text-sm text-on-surface leading-relaxed mb-3">{s.summary}</p>
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                        {s.tags.map((tag) => (
+                                            <span key={tag} className="border border-outline font-mono text-xs px-2 py-0.5 text-on-surface-variant">
+                                                #{tag}
+                                            </span>
+                                        ))}
+                                        <span className="font-mono text-xs text-outline ml-auto">신뢰도 {s.confidence}%</span>
+                                    </div>
+                                    <div className="mt-3 h-1 bg-surface-container-highest">
+                                        <div className="h-full bg-primary" style={{ width: `${s.confidence}%` }} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    <div className="micro-perforation my-12" />
+
+                    {/* ── [03] Features ── */}
                     <section id="features" className="mb-16">
                         <h2 className="font-headline font-bold text-xl text-primary mb-8 border-b border-primary pb-2 uppercase tracking-widest">
-                            [02] SYSTEM_MODULES
+                            [03] SYSTEM_MODULES
                         </h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {FEATURES.map((f) => (
