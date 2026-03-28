@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/features/auth/application/hooks/useAuth"
+import { usePublicSummaries } from "@/features/public/application/hooks/usePublicSummaries"
 
 const HOW_IT_WORKS = [
     {
@@ -23,42 +24,6 @@ const HOW_IT_WORKS = [
         title: "대시보드에서 확인",
         desc: "감성 점수, 리스크 태그, 3~5줄 요약을 대시보드에서 한눈에 확인합니다. 투자 판단은 본인이.",
         icon: "dashboard",
-    },
-]
-
-const SAMPLE_SUMMARIES = [
-    {
-        symbol: "005930",
-        name: "삼성전자",
-        sentiment: "POSITIVE",
-        score: "+0.72",
-        source: "뉴스",
-        tags: ["HBM", "AI서버", "반도체"],
-        summary:
-            "HBM3E 메모리 공급 계약 잠정 체결 보도. 엔비디아향 물량 증가 기대감. 2분기 실적 상향 모멘텀 확인.",
-        confidence: 84,
-    },
-    {
-        symbol: "005380",
-        name: "현대차",
-        sentiment: "NEUTRAL",
-        score: "+0.08",
-        source: "공시",
-        tags: ["전기차", "IRA", "북미"],
-        summary:
-            "미국 IRA 세액공제 요건 충족 공시 제출. 현지 생산 비율 조건 통과. 실질 수혜 규모는 추가 확인 필요.",
-        confidence: 61,
-    },
-    {
-        symbol: "068270",
-        name: "셀트리온",
-        sentiment: "NEGATIVE",
-        score: "-0.41",
-        source: "재무",
-        tags: ["바이오시밀러", "유럽", "가격경쟁"],
-        summary:
-            "유럽 바이오시밀러 시장 경쟁 심화로 평균 판매가격(ASP) 하락 압력. 마진 방어 전략 구체화 필요. 리스크 모니터링 권고.",
-        confidence: 77,
     },
 ]
 
@@ -89,6 +54,8 @@ const FEATURES = [
     },
 ]
 
+const SOURCE_LABEL: Record<string, string> = { NEWS: "뉴스", DISCLOSURE: "공시", REPORT: "재무" }
+
 const SENTIMENT_STYLE: Record<string, string> = {
     POSITIVE: "border-tertiary text-tertiary",
     NEUTRAL:  "border-on-surface-variant text-on-surface-variant",
@@ -101,9 +68,50 @@ const SENTIMENT_LABEL: Record<string, string> = {
     NEGATIVE: "부정",
 }
 
+function LoginRequiredModal({ onClose }: { onClose: () => void }) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <button
+                className="absolute inset-0 bg-black/70"
+                onClick={onClose}
+                aria-label="닫기"
+            />
+            <div className="relative z-10 w-full max-w-sm mx-4 border-2 border-primary bg-white p-8 text-center">
+                <div className="font-mono text-xs font-bold text-primary uppercase tracking-widest mb-4">
+                    ACCESS_DENIED
+                </div>
+                <p className="font-headline font-bold text-on-surface text-lg uppercase mb-2">
+                    로그인이 필요합니다
+                </p>
+                <p className="font-mono text-sm text-on-surface-variant mb-6">
+                    AI 분석 기능은 회원 전용입니다.<br />
+                    무료로 가입하고 바로 이용하세요.
+                </p>
+                <div className="flex gap-3">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex-1 font-mono text-sm border border-outline px-4 py-2 text-on-surface-variant hover:bg-surface-container uppercase"
+                    >
+                        닫기
+                    </button>
+                    <Link
+                        href="/login"
+                        className="flex-1 bg-primary text-white font-mono text-sm px-4 py-2 uppercase hover:opacity-90 text-center"
+                    >
+                        로그인 →
+                    </Link>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 export default function LandingPage() {
     const router = useRouter()
     const { state, loadUser } = useAuth()
+    const { summaries, isLoading: isSummaryLoading } = usePublicSummaries()
+    const [showLoginModal, setShowLoginModal] = useState(false)
 
     useEffect(() => {
         loadUser()
@@ -124,26 +132,22 @@ export default function LandingPage() {
     return (
         <div className="h-full overflow-y-auto bg-[#d1d1d1] font-body text-on-surface">
 
+            {showLoginModal && <LoginRequiredModal onClose={() => setShowLoginModal(false)} />}
+
             {/* Landing Nav */}
-            <nav className="sticky top-0 w-full z-50 bg-surface-container border-b-2 border-primary flex justify-between items-center px-6 h-12">
+            <nav className="sticky top-0 w-full z-40 bg-surface-container border-b-2 border-primary flex justify-between items-center px-6 h-12">
                 <span className="font-headline font-bold text-xl text-primary uppercase tracking-tighter">
                     ALPHA_DESK_v1.0
                 </span>
                 <div className="hidden md:flex gap-6 items-center font-mono uppercase tracking-tighter text-sm">
                     <a href="#how" className="text-on-surface-variant hover:text-primary">HOW_IT_WORKS</a>
-                    <a href="#sample" className="text-on-surface-variant hover:text-primary">SAMPLE_OUTPUT</a>
+                    <a href="#live" className="text-on-surface-variant hover:text-primary">LIVE_FEED</a>
                     <a href="#features" className="text-on-surface-variant hover:text-primary">FEATURES</a>
                 </div>
                 <div>
-                    {isLoggedIn ? (
-                        <Link href="/dashboard" className="bg-primary text-white font-mono text-xs px-3 py-1.5 uppercase hover:opacity-90">
-                            GO_DASHBOARD →
-                        </Link>
-                    ) : (
-                        <Link href="/login" className="bg-primary text-white font-mono text-xs px-3 py-1.5 uppercase hover:opacity-90">
-                            SYS_LOGIN →
-                        </Link>
-                    )}
+                    <Link href="/login" className="bg-primary text-white font-mono text-xs px-3 py-1.5 uppercase hover:opacity-90">
+                        SYS_LOGIN →
+                    </Link>
                 </div>
             </nav>
 
@@ -173,20 +177,12 @@ export default function LandingPage() {
                             </div>
 
                             <div className="flex gap-3 flex-wrap">
-                                {isLoggedIn ? (
-                                    <Link href="/dashboard" className="bg-primary text-white font-mono text-sm px-5 py-2.5 uppercase hover:opacity-90">
-                                        대시보드 시작 →
-                                    </Link>
-                                ) : (
-                                    <>
-                                        <Link href="/login" className="bg-primary text-white font-mono text-sm px-5 py-2.5 uppercase hover:opacity-90">
-                                            무료로 시작 →
-                                        </Link>
-                                        <Link href="/board" className="border border-primary text-primary font-mono text-sm px-5 py-2.5 uppercase hover:bg-primary hover:text-white">
-                                            커뮤니티 보기
-                                        </Link>
-                                    </>
-                                )}
+                                <Link href="/login" className="bg-primary text-white font-mono text-sm px-5 py-2.5 uppercase hover:opacity-90">
+                                    무료로 시작 →
+                                </Link>
+                                <Link href="/board" className="border border-primary text-primary font-mono text-sm px-5 py-2.5 uppercase hover:bg-primary hover:text-white">
+                                    커뮤니티 보기
+                                </Link>
                             </div>
 
                             <div className="border-t border-primary pt-4 grid grid-cols-3 gap-4 font-mono text-xs">
@@ -236,58 +232,94 @@ export default function LandingPage() {
 
                     <div className="micro-perforation my-12" />
 
-                    {/* ── [02] Sample Output ── */}
-                    <section id="sample" className="mb-16">
+                    {/* ── [02] Live Feed ── */}
+                    <section id="live" className="mb-16">
                         <h2 className="font-headline font-bold text-xl text-primary mb-2 border-b border-primary pb-2 uppercase tracking-widest">
-                            [02] SAMPLE_OUTPUT
+                            [02] LIVE_AI_FEED
                         </h2>
                         <p className="font-mono text-xs text-outline mb-6 uppercase tracking-widest">
-                            * 아래는 실제 AI 요약 결과 예시입니다. 로그인 후 본인의 관심종목 데이터를 확인하세요.
+                            * 주요 종목 최신 AI 분석 결과입니다. 내 관심종목 분석은 로그인 후 이용하세요.
                         </p>
 
-                        <div className="space-y-4">
-                            {SAMPLE_SUMMARIES.map((s) => (
-                                <div key={s.symbol} className="border border-outline bg-surface-container-low p-5">
-                                    {/* Header */}
-                                    <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-                                        <div className="flex items-center gap-3">
-                                            <span className="font-mono text-sm font-bold text-outline">{s.symbol}</span>
-                                            <span className="font-mono text-base font-bold text-on-surface">{s.name}</span>
-                                            <span className="border border-outline font-mono text-xs px-1.5 py-0.5 text-on-surface-variant">
-                                                {s.source}
+                        {isSummaryLoading ? (
+                            <div className="space-y-3">
+                                {[1, 2].map((i) => (
+                                    <div key={i} className="h-28 bg-surface-container animate-pulse" />
+                                ))}
+                            </div>
+                        ) : summaries.length === 0 ? (
+                            <div className="border border-dashed border-outline px-6 py-10 text-center">
+                                <p className="font-mono text-sm text-on-surface-variant">
+                                    오늘의 AI 분석 데이터를 준비 중입니다.
+                                </p>
+                                <p className="font-mono text-xs text-outline mt-1">
+                                    매일 07:00 KST 자동 수집됩니다.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {summaries.map((s) => (
+                                    <div key={s.symbol} className="border border-outline bg-surface-container-low p-5">
+                                        <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-mono text-sm font-bold text-outline">{s.symbol}</span>
+                                                <span className="font-mono text-base font-bold text-on-surface">{s.name}</span>
+                                                {s.source_type && SOURCE_LABEL[s.source_type] && (
+                                                    <span className="border border-outline font-mono text-xs px-1.5 py-0.5 text-on-surface-variant">
+                                                        {SOURCE_LABEL[s.source_type]}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className={`border font-mono text-xs px-2 py-0.5 font-bold ${SENTIMENT_STYLE[s.sentiment] ?? SENTIMENT_STYLE.NEUTRAL}`}>
+                                                {SENTIMENT_LABEL[s.sentiment] ?? s.sentiment}{" "}
+                                                {s.sentiment_score > 0 ? "+" : ""}{s.sentiment_score.toFixed(2)}
                                             </span>
                                         </div>
-                                        <span className={`border font-mono text-xs px-2 py-0.5 font-bold ${SENTIMENT_STYLE[s.sentiment]}`}>
-                                            {SENTIMENT_LABEL[s.sentiment]} {s.score}
-                                        </span>
-                                    </div>
 
-                                    {/* Summary */}
-                                    <p className="font-mono text-sm text-on-surface leading-relaxed mb-3">
-                                        {s.summary}
-                                    </p>
+                                        <p className="font-mono text-sm text-on-surface leading-relaxed mb-3">
+                                            {s.summary}
+                                        </p>
 
-                                    {/* Tags + Confidence */}
-                                    <div className="flex items-center gap-3 flex-wrap">
-                                        {s.tags.map((tag) => (
-                                            <span key={tag} className="border border-outline font-mono text-xs px-2 py-0.5 text-on-surface-variant">
-                                                #{tag}
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                            {s.tags.map((tag) => (
+                                                <span key={tag} className="border border-outline font-mono text-xs px-2 py-0.5 text-on-surface-variant">
+                                                    #{tag}
+                                                </span>
+                                            ))}
+                                            <span className="font-mono text-xs text-outline ml-auto">
+                                                신뢰도 {Math.round(s.confidence * 100)}%
                                             </span>
-                                        ))}
-                                        <span className="font-mono text-xs text-outline ml-auto">
-                                            신뢰도 {s.confidence}%
-                                        </span>
-                                    </div>
+                                        </div>
 
-                                    {/* Confidence bar */}
-                                    <div className="mt-3 h-1 bg-surface-container-highest">
-                                        <div
-                                            className="h-full bg-primary"
-                                            style={{ width: `${s.confidence}%` }}
-                                        />
+                                        <div className="mt-3 h-1 bg-surface-container-highest">
+                                            <div className="h-full bg-primary" style={{ width: `${s.confidence * 100}%` }} />
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+                        )}
+
+                        {/* 선택종목 분석 버튼 */}
+                        <div className="mt-6 border border-dashed border-outline px-6 py-6 text-center">
+                            <p className="font-mono text-sm text-on-surface-variant mb-3">
+                                내 관심종목 AI 분석을 직접 실행하려면 로그인이 필요합니다.
+                            </p>
+                            <div className="flex gap-3 justify-center flex-wrap">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowLoginModal(true)}
+                                    className="bg-primary text-white font-mono text-sm px-5 py-2 uppercase hover:opacity-90"
+                                >
+                                    AI 분석 실행
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowLoginModal(true)}
+                                    className="border border-primary text-primary font-mono text-sm px-5 py-2 uppercase hover:bg-primary hover:text-white"
+                                >
+                                    선택종목 분석
+                                </button>
+                            </div>
                         </div>
                     </section>
 
@@ -302,7 +334,7 @@ export default function LandingPage() {
                             {FEATURES.map((f) => (
                                 <Link
                                     key={f.title}
-                                    href={isLoggedIn ? f.href : "/login"}
+                                    href="/login"
                                     className="border border-outline p-5 bg-surface-container-low hover:border-primary group flex gap-4"
                                 >
                                     <span className="material-symbols-outlined text-primary flex-shrink-0 group-hover:scale-110 transition-transform" style={{ fontSize: "32px" }}>
@@ -332,15 +364,9 @@ export default function LandingPage() {
                                 NOT FINANCIAL ADVICE. INVESTMENT DECISIONS ARE SOLELY YOUR RESPONSIBILITY.
                             </p>
                             <div className="mt-6">
-                                {isLoggedIn ? (
-                                    <Link href="/dashboard" className="bg-white text-primary font-mono text-sm font-bold px-6 py-2.5 uppercase hover:opacity-90 inline-block">
-                                        대시보드로 이동 →
-                                    </Link>
-                                ) : (
-                                    <Link href="/login" className="bg-white text-primary font-mono text-sm font-bold px-6 py-2.5 uppercase hover:opacity-90 inline-block">
-                                        시작하기 →
-                                    </Link>
-                                )}
+                                <Link href="/login" className="bg-white text-primary font-mono text-sm font-bold px-6 py-2.5 uppercase hover:opacity-90 inline-block">
+                                    시작하기 →
+                                </Link>
                             </div>
                         </div>
                     </section>
