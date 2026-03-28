@@ -5,7 +5,7 @@ type Props = {
 }
 
 export function HomeAlphaTopPicks({ topPicks }: Props) {
-    if (topPicks.length === 0) return null
+    if (!topPicks || topPicks.length === 0) return null
 
     return (
         <div className="border border-outline bg-surface-container-low px-5 py-4">
